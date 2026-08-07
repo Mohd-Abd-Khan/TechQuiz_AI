@@ -1,33 +1,84 @@
-# TechQuiz AI - Full-Stack AI-Powered Learning Platform
+# ⚡ TechQuiz AI - Full-Stack AI-Powered Learning & Assessment Platform
 
-TechQuiz AI is a production-grade, full-stack web application built using the **MERN Stack** (MongoDB, Express.js, React.js, Node.js) and integrated with the **Google Gemini API** (using the new `@google/genai` SDK). 
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.0-61dafb.svg)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.19-lightgrey.svg)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248.svg)](https://www.mongodb.com/)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-4.7-black.svg)](https://socket.io/)
+[![Google Gemini LLM](https://img.shields.io/badge/Gemini_LLM-2.5--Flash-8E75B2.svg)](https://ai.google.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
 
-It features automated AI question generation, a real-time multiplayer duel system, a floating AI tutor chatbot, automated PDF study guides compiler, and custom user progress dashboard analytics.
+**TechQuiz AI** is a production-grade, full-stack web application designed for developer candidate assessment, interview preparation, and real-time multiplayer coding competitions. Built with the **MERN Stack** (MongoDB, Express.js, React 19, Node.js) and TypeScript, it integrates **Google Gemini AI (`@google/genai`)** to dynamically generate multiple-choice questions, provide interactive tutoring, analyze student skill gaps, and compile server-side PDF study notes.
 
 ---
 
-## ⚡ Architectural Highlights & Portfolio Showcase
+## 🌟 What This Platform Can Perform (Core Capabilities)
 
-This project resolves critical real-world engineering bottlenecks to demonstrate senior-level engineering standards:
+### 🧠 1. Automated AI Question Generation (Admin Suite)
+- Generates schema-validated JSON multiple-choice questions (MCQs) on any software engineering topic (e.g., React Hooks, System Design, SQL Indexing, Git Internals).
+- Guarantees strict structure (4 options, 0-based correct index, detailed explanations, and point weights) using Gemini's native `responseSchema` enforcement.
+
+### 💬 2. Interactive AI Tutor Chatbot & Doubt Solver
+- **Doubt Solver:** Explains wrong choices, reveals misconceptions, and provides real-world engineering analogies for any quiz question.
+- **Floating AI Tutor:** Multi-turn conversational chatbot that maintains dialogue history in MongoDB to guide candidates through complex technical topics.
+
+### ⚔️ 3. Real-Time Multiplayer Duel Arena
+- **6-Digit Room Codes:** Create host lobbies or join live matches with up to 5 concurrent players.
+- **Synchronized Game Engine:** Uses Socket.IO to broadcast question timers, instant score updates, speed-bonus points, and final podium standings.
+- **Live Lobby Chat:** Enables instant messaging between players prior to and during match sessions.
+
+### 📄 4. Server-Side PDF Study Guide Compiler
+- Compiles personalized downloadable A4 PDF study notes upon quiz completion.
+- Uses headless **Puppeteer** to dynamically inject performance statistics, wrong answer breakdowns, explanations, and AI study recommendations into a responsive print template.
+
+### ⏰ 5. Automated Daily Challenge Scheduler
+- Features a **Node-Cron background service** running at midnight (`0 0 * * *`) that generates fresh 10-question daily challenges across rotating technical topics.
+- Includes automatic startup database verification and seed fallback to guarantee an active daily challenge is available at all times.
+
+### 📊 6. User Analytics & Visual Performance Charts
+- **Recharts Integration:** Visualizes category mastery radar charts, activity progress line graphs, and accuracy percentage ratios.
+- **Streak & Badge System:** Tracks daily play streaks and unlocks digital badges (e.g., *Speed Demon*, *Quiz Master*, *Streak Legend*).
+
+### 🔐 7. Enterprise-Grade Security & Dual-Token Authentication
+- Combined **short-lived in-memory JWT access tokens** with **rotated HttpOnly/Secure refresh cookies**.
+- Active database session tracking (IP address & User-Agent) with **SHA-256 hashed OTP verification** and self-destructing **MongoDB TTL expiration indexes**.
+
+---
+
+## ⚡ Key Engineering & Architecture Highlights
 
 ### 1. Robust Rate-Limit Failover API Key Rotator
-Gemini's Free Tier has a strict `15 RPM` (Requests Per Minute) limit. To scale this, the backend features an **API Key Rotator** inside [gemini.ts](backend/src/config/gemini.ts).
-* It registers three separate Gemini API keys: `GEMINI_KEY_1`, `GEMINI_KEY_2`, and `GEMINI_KEY_3`.
-* It wraps AI operations in `withGeminiFailover()`. If a `429 ResourceExhausted` quota error is encountered, the backend automatically logs the exception, rotates to the next available healthy key, and retries the operation seamlessly without dropping requests.
+Gemini's Free Tier enforces a strict `15 RPM` (Requests Per Minute) quota. To prevent API exhaustion:
+- The backend implements a round-robin **API Key Rotator** ([gemini.ts](backend/src/config/gemini.ts)) registering multiple fallback keys (`GEMINI_KEY_1`, `GEMINI_KEY_2`, `GEMINI_KEY_3`, `GEMINI_API_KEY`).
+- Operations are wrapped in `withGeminiFailover()`. On receiving transient `429 Rate Limit`, `503 Service Unavailable`, or invalid key responses, it applies **jittered exponential backoff**, rotates to the next available healthy key, and retries seamlessly.
 
 ### 2. Live Match Token Protection Safeguard
-During live multiplayer matches, simultaneous AI calls could exhaust limits immediately.
-* **The Protection:** Generative AI workloads (interactive Tutor Chatbot and Doubt Solver) are strictly disabled during multiplayer match sessions.
-* **The Enforcement:** The backend API guards check and verify `attempt.mode === 'solo'`. Non-solo sessions block AI widgets, ensuring lightweight real-time WebSocket sync.
+Simultaneous AI calls during multiplayer duels could exhaust quota limits instantly.
+- Generative AI widgets (Doubt Solver & Tutor Chatbot) are strictly disabled during multiplayer rooms.
+- API guard middlewares verify `attempt.mode === 'solo'`. Non-solo sessions block AI endpoints, preserving low-latency WebSocket synchronization.
 
-### 3. Highly Secure JWT & HttpOnly Session Auth
-Implemented a robust, stateless-to-stateful authentication flow:
-* User registration triggers a temporary inactive record and generates a 6-digit verification OTP. The SHA-256 hashed OTP is stored in MongoDB with a `10-minute TTL index` that self-destructs.
-* Successful login writes a session document (tracking IP address and User-Agent) and sets a rotated `HttpOnly`, `Secure`, `SameSite=Strict` cookie containing a `refreshToken`.
-* The client receives a short-lived (15-minute) JWT Access Token in-memory. An Axios response interceptor intercepts `401 Unauthorized` states, calls `/api/auth/refresh` to rotate the cookie, and obtains a new access token seamlessly.
+### 3. Axios Interceptor Token Auto-Renewal
+- The client-side Axios instance ([api.ts](frontend/src/utils/api.ts)) stores access tokens purely in-memory.
+- An interceptor catches `401 Unauthorized` responses, silently triggers `/api/auth/refresh` to rotate cookies, acquires a new access token, and retries the original request transparently.
 
-### 4. Puppeteer Server-Side PDF Compiler
-When users click "Download Study Notes", the backend launches a headless Puppeteer browser pipeline, renders a personalized HTML template loaded with AI progress feedback, compile errors, and score charts, and generates a printable A4 PDF guide.
+---
+
+## 🛠️ Complete Technology Stack
+
+| Category | Technologies / Libraries Used |
+| :--- | :--- |
+| **Frontend Framework** | React 19, TypeScript, Vite |
+| **Styling & UI/UX** | Tailwind CSS v4, Framer Motion, Lucide React Icons |
+| **Data Visualization** | Recharts (Radar charts, Line graphs, Bar charts) |
+| **Backend Runtime & Framework** | Node.js (v18+), Express.js, TypeScript |
+| **Database & ORM** | MongoDB, Mongoose ORM (Mongoose 8) |
+| **Real-Time Communication** | Socket.IO (v4.7) |
+| **Generative AI & LLM** | Google Gemini API (`@google/genai` SDK v2.8) |
+| **Document Processing** | Puppeteer (Headless PDF compiler) |
+| **Background Tasks** | Node-Cron (Midnight cron scheduler) |
+| **Security & Auth** | JSON Web Tokens (JWT), BcryptJS, Cookie-Parser, Express-Rate-Limit, Zod |
+| **Email & Delivery** | Nodemailer (SMTP OTP delivery) |
 
 ---
 
@@ -37,28 +88,30 @@ When users click "Download Study Notes", the backend launches a headless Puppete
 01_Project/
 ├── backend/
 │   ├── src/
-│   │   ├── config/       # Databases, Mailers, Socket.io setup, Gemini failover rotator
-│   │   ├── controllers/  # Auth, Quiz CRUD, AI tutors, user dashboard controllers
-│   │   ├── middleware/   # JWT verification, Admin privileges, Zod validator, Rate limiter
+│   │   ├── config/       # Database, Nodemailer, Socket.io setup, Gemini failover rotator
+│   │   ├── controllers/  # Auth, Quiz CRUD, AI tutors, user analytics controllers
+│   │   ├── middleware/   # JWT verification, Admin authorization, Zod schema validator, Rate limiter
 │   │   ├── models/       # Mongoose Schemas (User, Session, Otp, Quiz, Question, Attempt, Chat, Badge)
+│   │   ├── routes/       # Express REST API route definitions
 │   │   ├── services/     # Cron scheduler, Puppeteer PDF compiler
-│   │   ├── app.ts        # Express app configuration & middlewares
+│   │   ├── app.ts        # Express app middleware configuration
 │   │   └── server.ts     # Main entry point (HTTP & WebSocket servers)
-│   ├── tsconfig.json     # TypeScript strict configuration
+│   ├── tsconfig.json     # Strict TypeScript backend configuration
 │   ├── package.json
-│   └── .env              # Backend secrets and DB URI configurations
+│   └── .env.example      # Backend environment variables template
 ├── frontend/
 │   ├── src/
-│   │   ├── components/   # UI/UX elements, Navigation, Glassmorphic components
-│   │   ├── context/      # AuthContext, SocketContext providers
+│   │   ├── assets/       # Static branding assets and icons
+│   │   ├── components/   # Navbar, Footer, Glassmorphic UI components, AI recommendation widgets
+│   │   ├── context/      # AuthContext and SocketContext state providers
 │   │   ├── pages/        # Auth, VerifyOtp, Dashboard, QuizAttempt, QuizResult, Lobbies, Leaderboards, Admin
-│   │   ├── utils/        # Axios API Client with token refresh interceptors
-│   │   ├── App.tsx       # Route guard definitions and app routes
-│   │   ├── index.css     # Tailwind CSS v4 styling, custom variables, animations
+│   │   ├── utils/        # Axios API Client with 401 refresh interceptors
+│   │   ├── App.tsx       # Route definitions & security guards
+│   │   ├── index.css     # Tailwind CSS v4 custom variables & animations
 │   │   └── main.tsx      # DOM Entrypoint
 │   ├── index.html        # Main HTML layout (SEO optimized)
-│   ├── tsconfig.json     # Strict React-TS configuration
-│   ├── vite.config.ts    # Vite compiler + Tailwind CSS plugin config
+│   ├── tsconfig.json     # React TypeScript configuration
+│   ├── vite.config.ts    # Vite bundler configuration
 │   └── package.json
 └── README.md
 ```
@@ -67,137 +120,112 @@ When users click "Download Study Notes", the backend launches a headless Puppete
 
 ## 🗄️ Database Schema Design (MongoDB & Mongoose)
 
-1. **User (`users`):**
-   * Coordinates account details: `username`, `email`, `passwordHash` (bcrypt), `role` (`user` | `admin`), `isVerified` (boolean), `streak` (integer), `lastActiveDate`, and `badges` (array of string IDs).
-2. **Session (`sessions`):**
-   * Tracks active client login instances: `userId`, `refreshTokenSignature`, `ipAddress`, `userAgent`, and `expiresAt` (has a MongoDB TTL expiration index).
-3. **Otp (`otps`):**
-   * Temporary OTP tracker: `email`, `otpHash` (SHA-256), and `expiresAt` (TTL index set to 10 minutes).
-4. **Quiz (`quizzes`):**
-   * Quiz shell: `title`, `description`, `category`, `difficulty` (`basic` | `intermediate` | `advanced`), `timeLimitPerQuestion` (seconds), `isActive`, `isDailyChallenge`, and `creator` (ObjectId reference).
-5. **Question (`questions`):**
-   * MCQ question: `quizId` (ObjectId), `text`, `options` (exactly 4 string options), `correctIndex` (integer 0-3), `explanation` (details why other choices are wrong), and `points` (default 10).
-6. **Attempt (`attempts`):**
-   * Quiz attempt log: `userId`, `quizId`, `score` (base points), `speedBonus`, `timeTaken` (seconds), `mode` (`solo` | `multiplayer`), `aiFeedback` (cached markdown text), and `questionsAttempted` (array of audits tracking question ID, selected option index, correctness, and response time).
-7. **Chat (`chats`):**
-   * AI multi-turn dialog context: `userId`, `attemptId`, and `messages` (array tracking role `user` | `model`, text, and timestamp).
-8. **Badge (`badges`):**
-   * Achievement metrics: `badgeId` (string ID), `name`, `description`, `iconCode` (Lucide identifier map), and `unlockCondition` definition.
+1. **User (`users`):** `username`, `email`, `passwordHash` (bcrypt), `role` (`user` \| `admin`), `isVerified`, `streak`, `lastActiveDate`, `badges`.
+2. **Session (`sessions`):** `userId`, `refreshTokenSignature`, `ipAddress`, `userAgent`, `expiresAt` (MongoDB TTL index).
+3. **Otp (`otps`):** `email`, `otpHash` (SHA-256), `expiresAt` (TTL index set to 10 minutes).
+4. **Quiz (`quizzes`):** `title`, `description`, `category`, `difficulty` (`basic` \| `intermediate` \| `advanced`), `timeLimitPerQuestion`, `isActive`, `isDailyChallenge`, `creator`.
+5. **Question (`questions`):** `quizId`, `text`, `options` (4 choices), `correctIndex` (0-3), `explanation`, `points`.
+6. **Attempt (`attempts`):** `userId`, `quizId`, `score`, `speedBonus`, `timeTaken`, `mode` (`solo` \| `multiplayer`), `aiFeedback`, `questionsAttempted` (audited answers & response times).
+7. **Chat (`chats`):** `userId`, `attemptId`, `messages` (role `user` \| `model`, text, timestamp).
+8. **Badge (`badges`):** `badgeId`, `name`, `description`, `iconCode`, `unlockCondition`.
 
 ---
 
-## 🔌 API Documentation (Express REST routes)
+## 🔌 API Documentation (Express REST Routes)
 
 ### 🔑 Authentication Routes (`/api/auth`)
-* `POST /register`: Registers a new inactive user; generates and hashes a 6-digit OTP, sends an email (logs to terminal if SMTP keys are absent), and returns registration metadata.
-* `POST /verify-otp`: Validates the SHA-256 hash of the verification OTP. On success, updates the user status to `isVerified: true` and deletes the OTP document.
-* `POST /login`: Validates credentials. Sets `refreshToken` as an HttpOnly secure cookie and creates a database Session. Returns a short-lived access token JWT in the response body.
-* `POST /refresh`: Verifies the cookie-bound refresh token against active database sessions, rotates the signature, updates the session, and sets a fresh HttpOnly cookie + a new access token.
-* `POST /logout`: Invalidates the active Session in MongoDB and clears cookie containers.
+* `POST /register`: Registers inactive user; hashes 6-digit OTP, sends email, returns registration metadata.
+* `POST /verify-otp`: Validates SHA-256 hash of OTP. Sets `isVerified: true` and deletes OTP document.
+* `POST /login`: Validates credentials. Sets `refreshToken` HttpOnly cookie & returns short-lived access token JWT.
+* `POST /refresh`: Verifies cookie refresh token against active sessions, rotates signature, and issues new access token.
+* `POST /logout`: Invalidates active session in MongoDB and clears cookie containers.
 
 ### 📝 Quiz Management Routes (`/api/quizzes`)
-* `GET /`: Returns a list of active standard quizzes (visible to standard clients).
-* `GET /:id`: Retrieves the quiz metadata and its questions for starting a quiz.
-* `POST /:id/submit`: Submits quiz responses; audits options, awards correct scores, calculates speed bonuses, updates streaks, checks badge completions, and writes an Attempt log.
-* `GET /attempt/:attemptId`: Retrieves the audited attempt statistics, quiz metadata, and correct options.
-* `GET /attempt/:attemptId/pdf`: Puppeteer renders a styled study guide HTML block containing results and AI recommendations, compiling it into a downloadable PDF binary.
-* **Admin-Restricted Registry (`/api/quizzes/admin/*`):**
-  * `GET /admin/list`: Lists all quizzes (active and inactive).
-  * `POST /admin/create`: Instantiates a new quiz shell.
-  * `PUT /admin/update/:id`: Edits quiz settings.
-  * `DELETE /admin/delete/:id`: Removes a quiz and its questions.
-  * `GET /admin/quiz/:id/questions`: Lists all questions under a quiz.
-  * `POST /admin/question/add`: Manually creates a question.
-  * `POST /admin/question/bulk-import`: Performs a bulk question upload.
+* `GET /`: Retrieves active standard quizzes.
+* `GET /:id`: Retrieves quiz metadata and questions.
+* `POST /:id/submit`: Audits choices, calculates speed bonuses, updates streaks, checks badges, and creates Attempt document.
+* `GET /attempt/:attemptId`: Retrieves audited attempt stats and answers.
+* `GET /attempt/:attemptId/pdf`: Puppeteer compiles a styled A4 PDF study guide binary for download.
+* **Admin Registry (`/api/quizzes/admin/*`):**
+  * `GET /admin/list`: Lists all quizzes.
+  * `POST /admin/create`: Creates a new quiz shell.
+  * `PUT /admin/update/:id`: Edits quiz parameters.
+  * `DELETE /admin/delete/:id`: Removes quiz & attached questions.
+  * `POST /admin/question/add`: Adds a manual MCQ.
+  * `POST /admin/question/bulk-import`: Imports bulk question arrays.
 
-### 🧠 Gemini AI Assistant Routes (`/api/ai`)
-* `POST /generate-questions` (Admin Only): Takes a topic, difficulty, and count. Gemini generates a schema-validated JSON MCQ question list.
-* `POST /doubt-solver`: Explains correct answer reasoning and gives technical analogies (Solo mode attempts only).
-* `GET /analyze-attempt/:attemptId`: Lazily audits score metrics and generates weak topic study guide reports.
-* `POST /chat-tutor`: multi-turn interactive chat chatbot dialogue with previous conversation context.
+### 🧠 Gemini AI Routes (`/api/ai`)
+* `POST /generate-questions` (Admin): Generates schema-validated JSON question lists via Gemini.
+* `POST /doubt-solver`: Provides explanations & technical analogies for incorrect options (Solo mode).
+* `GET /analyze-attempt/:attemptId`: Generates weak topic study guide reports.
+* `POST /chat-tutor`: Multi-turn conversational chat with saved MongoDB context.
 
-### 👤 User Profile Analytics (`/api/users`)
-* `GET /profile`: Summarizes total quiz count, total points, and play streak.
-* `GET /progress`: Aggregates category correct/incorrect ratio datasets for Recharts progress bar charts and queries Gemini progress advice.
+### 👤 User Analytics (`/api/users`)
+* `GET /profile`: Summarizes total points, quizzes taken, and daily streak.
+* `GET /progress`: Aggregates category correct/incorrect ratio datasets for Recharts radar maps.
 * `GET /badges`: Compares active badge logs against unlocked listings.
-* `GET /admin/analytics` (Admin Only): Compiles platform metrics and chart data (attempts trends and category radar weights).
+* `GET /admin/analytics` (Admin): Compiles platform metrics and chart data.
 
 ---
 
-## ⚙️ Environment Setup & Installation
+## ⚙️ Local Development Setup
 
-### 1. Requirements
-* **Node.js** (v18 or higher)
-* **MongoDB** (Local instance or MongoDB Atlas cluster)
-* **Google Gemini API Key(s)** (Obtainable via [Google AI Studio](https://aistudio.google.com/))
+### 1. Prerequisites
+- **Node.js** (v18 or higher)
+- **MongoDB** (Local instance or MongoDB Atlas cluster)
+- **Google Gemini API Key(s)** ([Google AI Studio](https://aistudio.google.com/))
 
-### 2. Configure Environment variables
-Navigate to the `backend` directory, create a `.env` file from the example, and configure variables:
+### 2. Backend Setup
 ```bash
 cd backend
 cp .env.example .env
 ```
-Open `.env` and fill the variables:
+Fill in `.env` variables:
 ```env
 PORT=5000
 MONGODB_URI=mongodb+srv://your_username:your_password@cluster.mongodb.net/techquiz-ai
 
-# Auth secrets
-JWT_SECRET=use_a_very_long_random_hash_string_here_for_access_token
-REFRESH_TOKEN_SECRET=use_a_very_long_random_hash_string_here_for_refresh_token
+JWT_SECRET=your_long_access_token_secret
+REFRESH_TOKEN_SECRET=your_long_refresh_token_secret
 
-# Gemini Rotator Keys (Scale up request limits)
-GEMINI_KEY_1=first_gemini_api_key_from_google
-GEMINI_KEY_2=second_gemini_api_key_from_google
-GEMINI_KEY_3=third_gemini_api_key_from_google
-GEMINI_API_KEY=primary_or_fallback_gemini_api_key
-
-# NodeMailer SMTP settings (Optional: if empty, OTPs output to terminal console)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_gmail@gmail.com
-EMAIL_PASS=your_gmail_app_password
-EMAIL_FROM="TechQuiz AI" <noreply@techquiz.com>
+# Gemini Failover Rotator Keys
+GEMINI_KEY_1=first_gemini_key
+GEMINI_KEY_2=second_gemini_key
+GEMINI_KEY_3=third_gemini_key
+GEMINI_API_KEY=fallback_gemini_key
 
 CLIENT_URL=http://localhost:5173
 ```
-
----
-
-## 🚀 Running the Project Locally
-
-### 1. Run the Backend Server
-From the root directory:
+Install dependencies and run:
 ```bash
-cd backend
 npm install
 npm run dev
 ```
-*The server will watch for changes and launch at `http://localhost:5000`.*
 
-### 2. Run the Frontend Client
-From the root directory:
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-*The client dev bundle will compile and launch the hot-reloading development server at `http://localhost:5173`.*
+Access the hot-reloading dev server at `http://localhost:5173`.
 
 ---
 
-## 🌐 Production Deployment Guide
+## 🚀 Future Work & Product Roadmap
 
-### Backend Hosting (e.g., Render)
-1. Set up a Web Service on Render, linking your backend repository folder.
-2. Select **Node** as the environment and specify `npm install` and `npm run build` as construction commands.
-3. Configure the start command as `npm start`.
-4. Copy all `.env` secrets into Render's **Environment Variables** console (ensure `CLIENT_URL` points to your deployed frontend domain).
-5. *Note:* Make sure your hosting environment has Puppeteer dependencies loaded (e.g., add the Puppeteer Buildpack on Heroku or verify Chromium libraries on Render).
+To further elevate **TechQuiz AI** into a full enterprise interview platform, the following features are planned:
 
-### Frontend Hosting (e.g., Vercel)
-1. Import your frontend repository folder to Vercel.
-2. Select **Vite** as the framework template.
-3. Configure the Output Directory as `dist` and build commands as `npm run build`.
-4. Set the **Environment Variable** `VITE_API_URL` to point to your deployed backend domain (e.g., `https://your-backend.onrender.com/api`).
-5. Deploy.
+- [ ] **Redis In-Memory Caching**: Cache active Socket.io room states, session tokens, and duplicate Gemini AI query outputs to reduce database load and cut down API latency.
+- [ ] **WebRTC Voice & Audio Channels**: Enable integrated live audio/video communication inside multiplayer lobbies for collaborative pair-programming study sessions.
+- [ ] **Adaptive AI Difficulty Engine**: Implement dynamic item-response theory (IRT) algorithms that adjust subsequent question difficulty automatically based on real-time candidate accuracy.
+- [ ] **Automated Testing Suite**: Introduce comprehensive unit tests (using Vitest/Jest) for backend controllers and end-to-end integration tests (using Playwright/Cypress).
+- [ ] **Docker Containerization**: Add a root `Dockerfile` and `docker-compose.yml` orchestrating Node.js API, React frontend, and local MongoDB container deployments.
+
+---
+
+## 👨‍💻 Author & Maintainer
+
+Developed by **Mohd Abdullah Khan**  
+- **GitHub**: [@Mohd-Abd-Khan](https://github.com/Mohd-Abd-Khan)  
+- **Project Repository**: [TechQuiz_AI](https://github.com/Mohd-Abd-Khan/TechQuiz_AI)

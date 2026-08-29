@@ -22,7 +22,6 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
     "puppeteer": "^22.10.2",
-    "socket.io": "^4.7.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {

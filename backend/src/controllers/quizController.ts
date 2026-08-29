@@ -290,7 +290,7 @@ export const submitQuizAttempt = async (
 ): Promise<void> => {
   try {
     const { id: quizId } = req.params;
-    const { answers, mode }: { answers: SubmitAnswerPayload[]; mode?: 'solo' | 'multiplayer' } = req.body;
+    const { answers }: { answers: SubmitAnswerPayload[] } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
@@ -309,7 +309,6 @@ export const submitQuizAttempt = async (
     const questionMap = new Map(questions.map((q) => [q._id.toString(), q]));
 
     let calculatedScore = 0;
-    let calculatedSpeedBonus = 0;
     let totalTimeTaken = 0;
 
     const questionsAttempted = answers.map((ans) => {
@@ -321,28 +320,8 @@ export const submitQuizAttempt = async (
       const isCorrect = ans.selectedOption === q.correctIndex;
       totalTimeTaken += ans.timeTaken;
 
-      let scoreGain = 0;
-      let speedBonus = 0;
-
-      if (isCorrect) {
-        scoreGain = q.points;
-
-        // Speed bonus logic:
-        // Max question response time limit in seconds
-        const maxTime = quiz.timeLimitPerQuestion || 30;
-        const ratio = ans.timeTaken / maxTime;
-
-        if (ratio < 0.3) {
-          // Less than 30% time taken: +5 bonus
-          speedBonus = 5;
-        } else if (ratio < 0.6) {
-          // Less than 60% time taken: +2 bonus
-          speedBonus = 2;
-        }
-      }
-
+      const scoreGain = isCorrect ? q.points : 0;
       calculatedScore += scoreGain;
-      calculatedSpeedBonus += speedBonus;
 
       return {
         questionId: q._id,
@@ -352,17 +331,17 @@ export const submitQuizAttempt = async (
       };
     });
 
-    const finalScore = calculatedScore + calculatedSpeedBonus;
+    const finalScore = calculatedScore;
 
     // Save Attempt document
     const attempt = new Attempt({
       userId: new mongoose.Types.ObjectId(userId),
       quizId: new mongoose.Types.ObjectId(quizId),
       questionsAttempted,
-      score: calculatedScore, // Base score
-      speedBonus: calculatedSpeedBonus, // Speed bonus score
+      score: calculatedScore,
+      speedBonus: 0,
       timeTaken: totalTimeTaken,
-      mode: mode || 'solo',
+      mode: 'solo',
     });
 
     await attempt.save();
@@ -403,10 +382,11 @@ export const submitQuizAttempt = async (
         unlockedBadgeMsg = 'Achievement Unlocked: First Quiz Attempt!';
       }
 
-      // Rule 2: 'speed_demon' - got at least 15 points in speed bonuses in a single attempt
-      if (calculatedSpeedBonus >= 15 && !currentBadges.has('speed_demon')) {
+      // Rule 2: 'speed_demon' - perfect score on quiz attempt
+      const maxPossibleScore = questionMap.size * 10;
+      if (calculatedScore >= maxPossibleScore && maxPossibleScore > 0 && !currentBadges.has('speed_demon')) {
         user.badges.push('speed_demon');
-        unlockedBadgeMsg = 'Achievement Unlocked: Speed Demon!';
+        unlockedBadgeMsg = 'Achievement Unlocked: Perfect Score Master!';
       }
 
       // Rule 3: Streak benchmarks
@@ -422,7 +402,7 @@ export const submitQuizAttempt = async (
         attempt,
         totalScore: finalScore,
         baseScore: calculatedScore,
-        speedBonus: calculatedSpeedBonus,
+        speedBonus: 0,
         streak: user.streak,
         badgeUnlocked: unlockedBadgeMsg || null,
       });
@@ -432,7 +412,7 @@ export const submitQuizAttempt = async (
         attempt,
         totalScore: finalScore,
         baseScore: calculatedScore,
-        speedBonus: calculatedSpeedBonus,
+        speedBonus: 0,
       });
     }
   } catch (error) {
@@ -450,14 +430,13 @@ export const getLeaderboard = async (req: Request, res: Response, next: NextFunc
     // Mongoose aggregate pipeline
     const leaderboard = await Attempt.aggregate([
       { $match: { quizId: new mongoose.Types.ObjectId(quizId) } },
-      // Project the totalScore as score + speedBonus
       {
         $project: {
           userId: 1,
           timeTaken: 1,
           baseScore: '$score',
           speedBonus: '$speedBonus',
-          totalScore: { $add: ['$score', '$speedBonus'] },
+          totalScore: '$score',
           createdAt: 1,
         },
       },

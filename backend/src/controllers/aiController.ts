@@ -115,15 +115,6 @@ export const getDoubtExplanation = async (
       return;
     }
 
-    // Multiplayer room check: strictly disabled during matches to save token limits
-    if (attempt.mode === 'multiplayer') {
-      res.status(403).json({
-        success: false,
-        message: 'AI Doubt Solver is not available for multiplayer matches to preserve rate limits.',
-      });
-      return;
-    }
-
     // Find the original question definition
     const question = await Question.findById(questionId);
     if (!question) {
@@ -230,8 +221,7 @@ export const getPerformanceAnalysis = async (
     const prompt = `Analyze a student's quiz submission and provide customized feedback.
     Quiz Topic Category: "${quiz.category}"
     Difficulty level: "${quiz.difficulty}"
-    Score: ${attempt.score} points out of ${questions.length * 10} maximum base points.
-    Speed Bonus Earned: ${attempt.speedBonus} points.
+    Score: ${attempt.score} points out of ${questions.length * 10} maximum points.
     Total Time Taken: ${attempt.timeTaken} seconds.
     Number of Correct Answers: ${correctCount}/${attempt.questionsAttempted.length}.
     
@@ -297,15 +287,6 @@ export const chatWithTutor = async (
 
     if (attempt.userId.toString() !== userId) {
       res.status(403).json({ success: false, message: 'Forbidden. You do not own this attempt.' });
-      return;
-    }
-
-    // Lock chatbot if the attempt was a multiplayer match
-    if (attempt.mode === 'multiplayer') {
-      res.status(403).json({
-        success: false,
-        message: 'AI Tutor is not active for multiplayer rooms to avoid rate limits.',
-      });
       return;
     }
 

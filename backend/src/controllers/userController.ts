@@ -79,7 +79,7 @@ export const getUserProfile = async (
     const totalAttempts = attempts.length;
     let totalScore = 0;
     attempts.forEach((a) => {
-      totalScore += (a.score + a.speedBonus);
+      totalScore += a.score;
     });
 
     res.status(200).json({
@@ -308,8 +308,8 @@ export const getAdminAnalytics = async (
         $group: {
           _id: null,
           avgBaseScore: { $avg: '$score' },
-          avgSpeedBonus: { $avg: '$speedBonus' },
-          avgTotalScore: { $avg: { $add: ['$score', '$speedBonus'] } },
+          avgSpeedBonus: { $sum: 0 },
+          avgTotalScore: { $avg: '$score' },
         },
       },
     ]);
@@ -326,7 +326,7 @@ export const getAdminAnalytics = async (
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
           count: { $sum: 1 },
-          avgScore: { $avg: { $add: ['$score', '$speedBonus'] } },
+          avgScore: { $avg: '$score' },
         },
       },
       { $sort: { _id: 1 } },

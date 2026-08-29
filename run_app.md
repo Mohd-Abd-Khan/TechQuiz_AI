@@ -77,7 +77,7 @@ npm run dev
 4. Observe the network logs; your access token is stored safely in-memory and rotates transparently.
 
 ### 3. Solo Quiz Gameplay & PDF Study Notes Compiler
-1. Select any technical quiz category (e.g., JavaScript Core) on your dashboard and click **Solo**.
+1. Select any technical quiz category (e.g., JavaScript Core) on your dashboard and click **Start Quiz**.
 2. Complete the quiz before the circular countdown timer expires.
 3. On the results page, click **Download Study Notes**. 
 4. Confirm that a styled PDF study guide compiles and automatically downloads via Puppeteer.
@@ -99,8 +99,3 @@ npm run dev
    ```
 5. Confirm that the frontend still successfully loads the study advice without crashing.
 
-### 6. Real-time Multiplayer Duels
-1. Click **Host Match** on any quiz.
-2. Copy the 6-digit lobby code generated on the host dashboard.
-3. Open a secondary browser window in **Incognito Mode**, register/log in a test user, paste the code in the dashboard **Lobby Code** field, and join the room.
-4. In the host window, click **Start Game**. Play through the questions and verify that timers, score updates, and live standings sync in real time.

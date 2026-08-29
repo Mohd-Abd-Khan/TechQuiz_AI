@@ -8,8 +8,8 @@ const Footer: React.FC = () => {
     'Tailwind CSS',
     'Node.js / Express',
     'MongoDB / Mongoose',
-    'Socket.io',
     'Gemini 2.5 Flash',
+    'Puppeteer PDF',
     'Framer Motion',
   ];
 
@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
               </h3>
             </div>
             <p className="text-gray-400 text-xs leading-relaxed max-w-sm">
-              An advanced cognitive developer learning platform utilizing generative AI for real-time practice quiz generation, WebSocket rooms for multiplayer duels, and structured progress dashboards.
+              An advanced cognitive developer learning platform utilizing generative AI for automated practice quiz generation, interactive AI tutoring, and server-side PDF study guide compilation.
             </p>
             <div className="flex flex-wrap gap-2 pt-2">
               {techTags.map((tag) => (

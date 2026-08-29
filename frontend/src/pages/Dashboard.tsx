@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
 import api from '../utils/api';
 import Navbar from '../components/Navbar';
-import { Flame, Users, ArrowRight, Play, HelpCircle, Gamepad2, ShieldAlert } from 'lucide-react';
+import { Flame, ArrowRight, Play, HelpCircle, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Footer from '../components/Footer';
 
@@ -21,13 +20,11 @@ interface Quiz {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { createMultiplayerRoom, joinMultiplayerRoom, room, joinError } = useSocket();
   const navigate = useNavigate();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [dailyQuiz, setDailyQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [joinCode, setJoinCode] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   // Fetch quizzes list
@@ -55,42 +52,8 @@ const Dashboard: React.FC = () => {
     fetchQuizzes();
   }, []);
 
-  // Listen for socket join error or successful room updates
-  useEffect(() => {
-    if (joinError) {
-      setError(joinError);
-    } else if (room) {
-      navigate(`/multiplayer/lobby/${room.code}`);
-    }
-  }, [joinError, room, navigate]);
-
   const handleStartSolo = (quizId: string) => {
     navigate(`/quiz/${quizId}`);
-  };
-
-  const handleHostMultiplayer = async (quiz: Quiz) => {
-    setError(null);
-    try {
-      // Fetch full questions to pass to socket manager
-      const response = await api.get(`/quizzes/${quiz._id}`);
-      if (response.data?.success) {
-        createMultiplayerRoom(quiz._id, quiz.title, response.data.questions);
-      } else {
-        setError('Failed to load questions for multiplayer room.');
-      }
-    } catch (err) {
-      console.error('Multiplayer room creation error:', err);
-      setError('Unable to initialize multiplayer room.');
-    }
-  };
-
-  const handleJoinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (joinCode.length !== 6 || isNaN(Number(joinCode))) {
-      return setError('Lobby codes must be exactly 6 numeric digits.');
-    }
-    joinMultiplayerRoom(joinCode);
   };
 
   // Difficulty pill color styles helper
@@ -117,7 +80,7 @@ const Dashboard: React.FC = () => {
               Welcome back, <span className="text-purple-400">{user?.username}</span>!
             </h1>
             <p className="text-gray-400 text-sm max-w-xl">
-              Sharpen your developer skills with our AI-powered learning system. Play solo for in-depth insights, or host multiplayer rooms to duel with friends in real-time.
+              Sharpen your developer skills with our AI-powered assessment platform. Test your knowledge, analyze skill gaps, and get interactive AI tutoring.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-orange-500/5 border border-orange-500/15 p-4 rounded-xl">
@@ -136,72 +99,38 @@ const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Dashboard Grid split (Daily challenge + Multiplayer Joining) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Daily challenge Panel */}
-          <div className="lg:col-span-2 glass-card p-6 border-l-4 border-l-orange-500 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-xs font-bold">
-                  DAILY QUIZ CHALLENGE
-                </span>
-              </div>
-              {dailyQuiz ? (
-                <>
-                  <h2 className="text-xl font-bold text-white mb-2">{dailyQuiz.title}</h2>
-                  <p className="text-gray-400 text-sm mb-6">{dailyQuiz.description}</p>
-                  <div className="flex gap-4 text-xs text-gray-500 font-semibold mb-6">
-                    <div>Category: <span className="text-purple-400">{dailyQuiz.category}</span></div>
-                    <div>Difficulty: <span className="text-yellow-400 uppercase">{dailyQuiz.difficulty}</span></div>
-                    <div>Questions: <span className="text-gray-300">{dailyQuiz.questionCount}</span></div>
-                  </div>
-                </>
-              ) : (
-                <div className="py-8 text-center text-gray-500 text-sm">
-                  Daily Challenge generating... Check back in a few minutes or try standard challenges!
-                </div>
-              )}
+        {/* Daily Challenge Banner */}
+        <div className="glass-card p-6 border-l-4 border-l-orange-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-xs font-bold">
+                DAILY QUIZ CHALLENGE
+              </span>
             </div>
-            {dailyQuiz && (
-              <button
-                onClick={() => handleStartSolo(dailyQuiz._id)}
-                className="btn-primary flex items-center justify-center gap-2 py-3 px-6 text-sm w-full sm:w-auto self-start bg-gradient-to-r from-orange-500 to-amber-500 shadow-orange-500/20"
-              >
-                Attempt Challenge <ArrowRight className="w-4 h-4" />
-              </button>
+            {dailyQuiz ? (
+              <>
+                <h2 className="text-xl font-bold text-white mb-2">{dailyQuiz.title}</h2>
+                <p className="text-gray-400 text-sm mb-4 max-w-2xl">{dailyQuiz.description}</p>
+                <div className="flex flex-wrap gap-4 text-xs text-gray-500 font-semibold">
+                  <div>Category: <span className="text-purple-400">{dailyQuiz.category}</span></div>
+                  <div>Difficulty: <span className="text-yellow-400 uppercase">{dailyQuiz.difficulty}</span></div>
+                  <div>Questions: <span className="text-gray-300">{dailyQuiz.questionCount}</span></div>
+                </div>
+              </>
+            ) : (
+              <div className="py-4 text-gray-500 text-sm">
+                Daily Challenge generating... Check back in a few minutes or try standard challenges!
+              </div>
             )}
           </div>
-
-          {/* Join Multiplayer Panel */}
-          <div className="glass-card p-6 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Gamepad2 className="w-5 h-5 text-purple-400" />
-                <h3 className="font-bold text-white text-md">Enter Match lobby</h3>
-              </div>
-              <p className="text-gray-400 text-xs mb-6">
-                Have a 6-digit invite code? Paste it below to join your friends in a live quiz duel.
-              </p>
-            </div>
-            <form onSubmit={handleJoinSubmit} className="space-y-4">
-              <input
-                type="text"
-                required
-                maxLength={6}
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="Lobby Code (e.g. 123456)"
-                className="w-full glass-input text-center text-lg font-mono tracking-widest uppercase focus:border-purple-500"
-              />
-              <button
-                type="submit"
-                disabled={joinCode.length !== 6}
-                className="w-full btn-secondary text-sm font-semibold flex items-center justify-center gap-2"
-              >
-                Join Lobby <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
+          {dailyQuiz && (
+            <button
+              onClick={() => handleStartSolo(dailyQuiz._id)}
+              className="btn-primary flex items-center justify-center gap-2 py-3 px-6 text-sm w-full md:w-auto flex-shrink-0 bg-gradient-to-r from-orange-500 to-amber-500 shadow-orange-500/20"
+            >
+              Attempt Challenge <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Quizzes List */}
@@ -244,18 +173,12 @@ const Dashboard: React.FC = () => {
                       Questions: <span className="text-gray-300">{quiz.questionCount}</span> | Timer: <span className="text-gray-300">{quiz.timeLimitPerQuestion}s / q</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div>
                     <button
                       onClick={() => handleStartSolo(quiz._id)}
-                      className="btn-primary py-2 px-3 text-xs flex items-center justify-center gap-1"
+                      className="w-full btn-primary py-2.5 px-4 text-xs font-semibold flex items-center justify-center gap-2"
                     >
-                      <Play className="w-3.5 h-3.5 fill-white" /> Solo
-                    </button>
-                    <button
-                      onClick={() => handleHostMultiplayer(quiz)}
-                      className="btn-secondary py-2 px-3 text-xs flex items-center justify-center gap-1 hover:text-purple-400 hover:border-purple-500/30"
-                    >
-                      <Users className="w-3.5 h-3.5" /> Host Match
+                      <Play className="w-3.5 h-3.5 fill-white" /> Start Quiz
                     </button>
                   </div>
                 </motion.div>

@@ -140,10 +140,8 @@ const Leaderboard: React.FC = () => {
                   <tr className="bg-white/2 border-b border-white/5 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
                     <th className="py-4 px-6 text-center">Rank</th>
                     <th className="py-4 px-6">Player</th>
-                    <th className="py-4 px-6 text-center">Base Score</th>
-                    <th className="py-4 px-6 text-center">Speed Bonus</th>
                     <th className="py-4 px-6 text-center">Time</th>
-                    <th className="py-4 px-6 text-right">Total Score</th>
+                    <th className="py-4 px-6 text-right">Score</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-sm">
@@ -166,10 +164,6 @@ const Leaderboard: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-4 px-6 font-semibold text-white">{row.username}</td>
-                        <td className="py-4 px-6 text-center text-gray-300">{row.baseScore}</td>
-                        <td className="py-4 px-6 text-center text-yellow-400/90 font-bold font-mono">
-                          {row.speedBonus > 0 ? `+${row.speedBonus}` : '0'}
-                        </td>
                         <td className="py-4 px-6 text-center text-gray-400 font-mono">{row.timeTaken}s</td>
                         <td className="py-4 px-6 text-right font-black text-purple-400 text-glow pr-8">
                           {row.totalScore} pts

@@ -55,8 +55,7 @@ export const generateAttemptPdfBuffer = async (
     const prompt = `Analyze a student's quiz submission and provide customized study guide feedback.
     Quiz Topic Category: "${quiz.category}"
     Difficulty: "${quiz.difficulty}"
-    Score: ${attempt.score} base points out of ${questions.length * 10}.
-    Speed Bonus Earned: ${attempt.speedBonus} points.
+    Score: ${attempt.score} points out of ${questions.length * 10}.
     Total Time Taken: ${attempt.timeTaken} seconds.
     Number of Correct Answers: ${correctCount}/${attempt.questionsAttempted.length}.
     
@@ -244,8 +243,7 @@ export const generateAttemptPdfBuffer = async (
         <div class="meta-item"><strong>Quiz Title:</strong> ${quiz.title}</div>
         <div class="meta-item"><strong>Topic Category:</strong> ${quiz.category}</div>
         <div class="meta-item"><strong>Quiz Difficulty:</strong> ${quiz.difficulty}</div>
-        <div class="meta-item"><strong>Score Earned:</strong> ${attempt.score + attempt.speedBonus} / ${questions.length * 10}</div>
-        <div class="meta-item"><strong>Speed Bonus:</strong> ${attempt.speedBonus} pts</div>
+        <div class="meta-item"><strong>Score Earned:</strong> ${attempt.score} / ${questions.length * 10}</div>
         <div class="meta-item"><strong>Time Taken:</strong> ${attempt.timeTaken} seconds</div>
       </div>
 

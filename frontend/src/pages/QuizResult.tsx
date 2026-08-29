@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import Navbar from '../components/Navbar';
 import { 
-  Trophy, Zap, Clock, ArrowRight, Download, BrainCircuit, 
+  Trophy, Clock, ArrowRight, Download, BrainCircuit, 
   HelpCircle, MessageSquare, ChevronDown, ChevronUp, AlertCircle, X, Send 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +22,7 @@ interface Attempt {
   score: number; // base score
   speedBonus: number;
   timeTaken: number;
-  mode: 'solo' | 'multiplayer';
+  mode: 'solo';
   questionsAttempted: QuestionAudit[];
   aiFeedback?: string;
 }
@@ -268,16 +268,10 @@ const QuizResult: React.FC = () => {
           <h1 className="text-2xl font-black text-white uppercase tracking-wider mb-2">Quiz Complete!</h1>
           <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">{quiz.title}</p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mt-6">
             <div className="bg-white/5 border border-white/5 p-4 rounded-xl">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Final Score</div>
-              <div className="text-2xl font-black text-purple-400 mt-1">{attempt.score + attempt.speedBonus} pts</div>
-            </div>
-            <div className="bg-white/5 border border-white/5 p-4 rounded-xl">
-              <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Speed Bonus</div>
-              <div className="text-2xl font-black text-yellow-400 mt-1 flex items-center justify-center gap-1">
-                <Zap className="w-5 h-5 fill-yellow-400" /> {attempt.speedBonus}
-              </div>
+              <div className="text-2xl font-black text-purple-400 mt-1">{attempt.score} pts</div>
             </div>
             <div className="bg-white/5 border border-white/5 p-4 rounded-xl">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Accuracy</div>
@@ -308,9 +302,8 @@ const QuizResult: React.FC = () => {
           </div>
         </div>
 
-        {/* AI Performance Analysis Section (Solo sessions only) */}
-        {attempt.mode === 'solo' && (
-          <div className="glass-card p-6 border-l-4 border-l-purple-500">
+        {/* AI Performance Analysis Section */}
+        <div className="glass-card p-6 border-l-4 border-l-purple-500">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <BrainCircuit className="w-5 h-5 text-purple-400" />
@@ -352,7 +345,6 @@ const QuizResult: React.FC = () => {
               </p>
             )}
           </div>
-        )}
 
         {/* Question Audit Breakdown */}
         <div>
@@ -427,9 +419,8 @@ const QuizResult: React.FC = () => {
                         <strong>Explanation:</strong> {q.explanation}
                       </div>
 
-                      {/* AI Doubt solver button (Solo attempts only) */}
-                      {attempt.mode === 'solo' && (
-                        <div className="pt-2">
+                      {/* AI Doubt solver button */}
+                      <div className="pt-2">
                           <button
                             onClick={() => handleAskDoubtSolver(q, audit.selectedOption)}
                             disabled={doubtLoading}
@@ -455,7 +446,6 @@ const QuizResult: React.FC = () => {
                             </div>
                           )}
                         </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -464,9 +454,8 @@ const QuizResult: React.FC = () => {
           </div>
         </div>
 
-        {/* Floating AI Chatbot Tutor widget (Solo sessions only) */}
-        {attempt.mode === 'solo' && (
-          <div className="fixed bottom-6 right-6 z-50">
+        {/* Floating AI Chatbot Tutor widget */}
+        <div className="fixed bottom-6 right-6 z-50">
             <AnimatePresence>
               {chatbotOpen ? (
                 <motion.div
@@ -569,8 +558,7 @@ const QuizResult: React.FC = () => {
               )}
             </AnimatePresence>
           </div>
-        )}
-      </div>
+        </div>
       </div>
       <Footer />
     </div>

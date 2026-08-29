@@ -15,7 +15,7 @@ export interface IAttempt extends Document {
   speedBonus: number;
   timeTaken: number; // total time in seconds
   aiFeedback: string;
-  mode: 'solo' | 'multiplayer';
+  mode: 'solo';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,7 +73,7 @@ const AttemptSchema = new Schema<IAttempt>(
     },
     mode: {
       type: String,
-      enum: ['solo', 'multiplayer'],
+      enum: ['solo'],
       default: 'solo',
       index: true,
     },

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import Navbar from '../components/Navbar';
-import { HelpCircle, AlertCircle, Zap } from 'lucide-react';
+import { HelpCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Question {
@@ -201,9 +201,6 @@ const QuizAttempt: React.FC = () => {
   
 
 
-  // Check if user is eligible for Speed Bonus (answering within 30% of limit)
-  const isSpeedBonusEligible = secondsLeft / timeLimit > 0.7;
-
   return (
     <div className="min-h-screen gradient-bg text-white pt-24 pb-12 px-6 flex flex-col justify-center">
       <Navbar />
@@ -256,13 +253,6 @@ const QuizAttempt: React.FC = () => {
             transition={{ duration: 0.3 }}
             className="glass-card p-8 mb-6"
           >
-            {/* Speed bonus active visual indicator */}
-            {isSpeedBonusEligible && selectedOpt === null && (
-              <div className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 text-green-400 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider mb-6 animate-pulse">
-                <Zap className="w-3.5 h-3.5 fill-green-400" />
-                <span>SPEED BONUS ACTIVE (+5 PTS)</span>
-              </div>
-            )}
 
             <h2 className="text-lg font-bold leading-relaxed mb-8 flex gap-3">
               <HelpCircle className="w-6 h-6 text-purple-400 flex-shrink-0 mt-0.5" />

@@ -5,11 +5,10 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.19-lightgrey.svg)](https://expressjs.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248.svg)](https://www.mongodb.com/)
-[![Socket.IO](https://img.shields.io/badge/Socket.IO-4.7-black.svg)](https://socket.io/)
 [![Google Gemini LLM](https://img.shields.io/badge/Gemini_LLM-2.5--Flash-8E75B2.svg)](https://ai.google.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
 
-**TechQuiz AI** is a production-grade, full-stack web application designed for developer candidate assessment, interview preparation, and real-time multiplayer coding competitions. Built with the **MERN Stack** (MongoDB, Express.js, React 19, Node.js) and TypeScript, it integrates **Google Gemini AI (`@google/genai`)** to dynamically generate multiple-choice questions, provide interactive tutoring, analyze student skill gaps, and compile server-side PDF study notes.
+**TechQuiz AI** is a production-grade, full-stack web application designed for developer candidate assessment and technical interview preparation. Built with the **MERN Stack** (MongoDB, Express.js, React 19, Node.js) and TypeScript, it integrates **Google Gemini AI (`@google/genai`)** to dynamically generate multiple-choice questions, provide interactive tutoring, analyze student skill gaps, and compile server-side PDF study notes.
 
 ---
 
@@ -23,24 +22,19 @@
 - **Doubt Solver:** Explains wrong choices, reveals misconceptions, and provides real-world engineering analogies for any quiz question.
 - **Floating AI Tutor:** Multi-turn conversational chatbot that maintains dialogue history in MongoDB to guide candidates through complex technical topics.
 
-### ⚔️ 3. Real-Time Multiplayer Duel Arena
-- **6-Digit Room Codes:** Create host lobbies or join live matches with up to 5 concurrent players.
-- **Synchronized Game Engine:** Uses Socket.IO to broadcast question timers, instant score updates, speed-bonus points, and final podium standings.
-- **Live Lobby Chat:** Enables instant messaging between players prior to and during match sessions.
-
-### 📄 4. Server-Side PDF Study Guide Compiler
+### 📄 3. Server-Side PDF Study Guide Compiler
 - Compiles personalized downloadable A4 PDF study notes upon quiz completion.
 - Uses headless **Puppeteer** to dynamically inject performance statistics, wrong answer breakdowns, explanations, and AI study recommendations into a responsive print template.
 
-### ⏰ 5. Automated Daily Challenge Scheduler
+### ⏰ 4. Automated Daily Challenge Scheduler
 - Features a **Node-Cron background service** running at midnight (`0 0 * * *`) that generates fresh 10-question daily challenges across rotating technical topics.
 - Includes automatic startup database verification and seed fallback to guarantee an active daily challenge is available at all times.
 
-### 📊 6. User Analytics & Visual Performance Charts
+### 📊 5. User Analytics & Visual Performance Charts
 - **Recharts Integration:** Visualizes category mastery radar charts, activity progress line graphs, and accuracy percentage ratios.
-- **Streak & Badge System:** Tracks daily play streaks and unlocks digital badges (e.g., *Speed Demon*, *Quiz Master*, *Streak Legend*).
+- **Streak & Badge System:** Tracks daily play streaks and unlocks digital badges (e.g., *First Blood*, *Quiz Master*, *Daily Champion*).
 
-### 🔐 7. Enterprise-Grade Security & Dual-Token Authentication
+### 🔐 6. Enterprise-Grade Security & Dual-Token Authentication
 - Combined **short-lived in-memory JWT access tokens** with **rotated HttpOnly/Secure refresh cookies**.
 - Active database session tracking (IP address & User-Agent) with **SHA-256 hashed OTP verification** and self-destructing **MongoDB TTL expiration indexes**.
 
@@ -48,17 +42,14 @@
 
 ## ⚡ Key Engineering & Architecture Highlights
 
+> 📖 **Complete System Design Document:** For a detailed architectural breakdown, request lifecycle traces, sequence diagrams, and SDE interview cheat-sheets, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ### 1. Robust Rate-Limit Failover API Key Rotator
 Gemini's Free Tier enforces a strict `15 RPM` (Requests Per Minute) quota. To prevent API exhaustion:
 - The backend implements a round-robin **API Key Rotator** ([gemini.ts](backend/src/config/gemini.ts)) registering multiple fallback keys (`GEMINI_KEY_1`, `GEMINI_KEY_2`, `GEMINI_KEY_3`, `GEMINI_API_KEY`).
 - Operations are wrapped in `withGeminiFailover()`. On receiving transient `429 Rate Limit`, `503 Service Unavailable`, or invalid key responses, it applies **jittered exponential backoff**, rotates to the next available healthy key, and retries seamlessly.
 
-### 2. Live Match Token Protection Safeguard
-Simultaneous AI calls during multiplayer duels could exhaust quota limits instantly.
-- Generative AI widgets (Doubt Solver & Tutor Chatbot) are strictly disabled during multiplayer rooms.
-- API guard middlewares verify `attempt.mode === 'solo'`. Non-solo sessions block AI endpoints, preserving low-latency WebSocket synchronization.
-
-### 3. Axios Interceptor Token Auto-Renewal
+### 2. Axios Interceptor Token Auto-Renewal
 - The client-side Axios instance ([api.ts](frontend/src/utils/api.ts)) stores access tokens purely in-memory.
 - An interceptor catches `401 Unauthorized` responses, silently triggers `/api/auth/refresh` to rotate cookies, acquires a new access token, and retries the original request transparently.
 
@@ -73,7 +64,6 @@ Simultaneous AI calls during multiplayer duels could exhaust quota limits instan
 | **Data Visualization** | Recharts (Radar charts, Line graphs, Bar charts) |
 | **Backend Runtime & Framework** | Node.js (v18+), Express.js, TypeScript |
 | **Database & ORM** | MongoDB, Mongoose ORM (Mongoose 8) |
-| **Real-Time Communication** | Socket.IO (v4.7) |
 | **Generative AI & LLM** | Google Gemini API (`@google/genai` SDK v2.8) |
 | **Document Processing** | Puppeteer (Headless PDF compiler) |
 | **Background Tasks** | Node-Cron (Midnight cron scheduler) |
@@ -88,14 +78,14 @@ Simultaneous AI calls during multiplayer duels could exhaust quota limits instan
 01_Project/
 ├── backend/
 │   ├── src/
-│   │   ├── config/       # Database, Nodemailer, Socket.io setup, Gemini failover rotator
+│   │   ├── config/       # Database, Nodemailer setup, Gemini failover rotator
 │   │   ├── controllers/  # Auth, Quiz CRUD, AI tutors, user analytics controllers
 │   │   ├── middleware/   # JWT verification, Admin authorization, Zod schema validator, Rate limiter
 │   │   ├── models/       # Mongoose Schemas (User, Session, Otp, Quiz, Question, Attempt, Chat, Badge)
 │   │   ├── routes/       # Express REST API route definitions
 │   │   ├── services/     # Cron scheduler, Puppeteer PDF compiler
 │   │   ├── app.ts        # Express app middleware configuration
-│   │   └── server.ts     # Main entry point (HTTP & WebSocket servers)
+│   │   └── server.ts     # Main entry point (HTTP API server)
 │   ├── tsconfig.json     # Strict TypeScript backend configuration
 │   ├── package.json
 │   └── .env.example      # Backend environment variables template
@@ -103,8 +93,8 @@ Simultaneous AI calls during multiplayer duels could exhaust quota limits instan
 │   ├── src/
 │   │   ├── assets/       # Static branding assets and icons
 │   │   ├── components/   # Navbar, Footer, Glassmorphic UI components, AI recommendation widgets
-│   │   ├── context/      # AuthContext and SocketContext state providers
-│   │   ├── pages/        # Auth, VerifyOtp, Dashboard, QuizAttempt, QuizResult, Lobbies, Leaderboards, Admin
+│   │   ├── context/      # AuthContext state provider
+│   │   ├── pages/        # Auth, VerifyOtp, Dashboard, QuizAttempt, QuizResult, Leaderboards, Admin
 │   │   ├── utils/        # Axios API Client with 401 refresh interceptors
 │   │   ├── App.tsx       # Route definitions & security guards
 │   │   ├── index.css     # Tailwind CSS v4 custom variables & animations
@@ -125,7 +115,7 @@ Simultaneous AI calls during multiplayer duels could exhaust quota limits instan
 3. **Otp (`otps`):** `email`, `otpHash` (SHA-256), `expiresAt` (TTL index set to 10 minutes).
 4. **Quiz (`quizzes`):** `title`, `description`, `category`, `difficulty` (`basic` \| `intermediate` \| `advanced`), `timeLimitPerQuestion`, `isActive`, `isDailyChallenge`, `creator`.
 5. **Question (`questions`):** `quizId`, `text`, `options` (4 choices), `correctIndex` (0-3), `explanation`, `points`.
-6. **Attempt (`attempts`):** `userId`, `quizId`, `score`, `speedBonus`, `timeTaken`, `mode` (`solo` \| `multiplayer`), `aiFeedback`, `questionsAttempted` (audited answers & response times).
+6. **Attempt (`attempts`):** `userId`, `quizId`, `score`, `timeTaken`, `mode` (`solo`), `aiFeedback`, `questionsAttempted` (audited choices & response times).
 7. **Chat (`chats`):** `userId`, `attemptId`, `messages` (role `user` \| `model`, text, timestamp).
 8. **Badge (`badges`):** `badgeId`, `name`, `description`, `iconCode`, `unlockCondition`.
 
@@ -143,7 +133,7 @@ Simultaneous AI calls during multiplayer duels could exhaust quota limits instan
 ### 📝 Quiz Management Routes (`/api/quizzes`)
 * `GET /`: Retrieves active standard quizzes.
 * `GET /:id`: Retrieves quiz metadata and questions.
-* `POST /:id/submit`: Audits choices, calculates speed bonuses, updates streaks, checks badges, and creates Attempt document.
+* `POST /:id/submit`: Audits choices, calculates actual marks score, updates streaks, checks badges, and creates Attempt document.
 * `GET /attempt/:attemptId`: Retrieves audited attempt stats and answers.
 * `GET /attempt/:attemptId/pdf`: Puppeteer compiles a styled A4 PDF study guide binary for download.
 * **Admin Registry (`/api/quizzes/admin/*`):**
@@ -156,7 +146,7 @@ Simultaneous AI calls during multiplayer duels could exhaust quota limits instan
 
 ### 🧠 Gemini AI Routes (`/api/ai`)
 * `POST /generate-questions` (Admin): Generates schema-validated JSON question lists via Gemini.
-* `POST /doubt-solver`: Provides explanations & technical analogies for incorrect options (Solo mode).
+* `POST /doubt-solver`: Provides explanations & technical analogies for incorrect options.
 * `GET /analyze-attempt/:attemptId`: Generates weak topic study guide reports.
 * `POST /chat-tutor`: Multi-turn conversational chat with saved MongoDB context.
 
@@ -216,8 +206,7 @@ Access the hot-reloading dev server at `http://localhost:5173`.
 
 To further elevate **TechQuiz AI** into a full enterprise interview platform, the following features are planned:
 
-- [ ] **Redis In-Memory Caching**: Cache active Socket.io room states, session tokens, and duplicate Gemini AI query outputs to reduce database load and cut down API latency.
-- [ ] **WebRTC Voice & Audio Channels**: Enable integrated live audio/video communication inside multiplayer lobbies for collaborative pair-programming study sessions.
+- [ ] **Redis In-Memory Caching**: Cache session tokens and duplicate Gemini AI query outputs to reduce database load and cut down API latency.
 - [ ] **Adaptive AI Difficulty Engine**: Implement dynamic item-response theory (IRT) algorithms that adjust subsequent question difficulty automatically based on real-time candidate accuracy.
 - [ ] **Automated Testing Suite**: Introduce comprehensive unit tests (using Vitest/Jest) for backend controllers and end-to-end integration tests (using Playwright/Cypress).
 - [ ] **Docker Containerization**: Add a root `Dockerfile` and `docker-compose.yml` orchestrating Node.js API, React frontend, and local MongoDB container deployments.

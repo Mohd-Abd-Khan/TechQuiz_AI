@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # MongoDB Database Service
+  mongodb:
+    image: mongo:6.0
+    container_name: techquiz_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: techquiz-ai
+    volumes:
+      - mongodb_data:/data/db
+
+  # Express Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: techquiz_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/techquiz-ai
+      - JWT_SECRET=production_jwt_secret_key_techquiz_2026
+      - REFRESH_TOKEN_SECRET=production_refresh_secret_key_techquiz_2026
+      - CLIENT_URL=http://localhost
+    depends_on:
+      - mongodb
+
+  # React Frontend Service (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: techquiz_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:

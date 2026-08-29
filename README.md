@@ -68,6 +68,8 @@ Gemini's Free Tier enforces a strict `15 RPM` (Requests Per Minute) quota. To pr
 | **Document Processing** | Puppeteer (Headless PDF compiler) |
 | **Background Tasks** | Node-Cron (Midnight cron scheduler) |
 | **Security & Auth** | JSON Web Tokens (JWT), BcryptJS, Cookie-Parser, Express-Rate-Limit, Zod |
+| **Containerization** | Docker, Docker Compose, Nginx |
+| **CI/CD Pipeline** | GitHub Actions (Automated Build & Typecheck Workflows) |
 | **Email & Delivery** | Nodemailer (SMTP OTP delivery) |
 
 ---
@@ -76,6 +78,9 @@ Gemini's Free Tier enforces a strict `15 RPM` (Requests Per Minute) quota. To pr
 
 ```
 01_Project/
+├── .github/
+│   └── workflows/
+│       └── ci.yml        # GitHub Actions CI workflow (Automated build & typecheck validation)
 ├── backend/
 │   ├── src/
 │   │   ├── config/       # Database, Nodemailer setup, Gemini failover rotator
@@ -86,6 +91,7 @@ Gemini's Free Tier enforces a strict `15 RPM` (Requests Per Minute) quota. To pr
 │   │   ├── services/     # Cron scheduler, Puppeteer PDF compiler
 │   │   ├── app.ts        # Express app middleware configuration
 │   │   └── server.ts     # Main entry point (HTTP API server)
+│   ├── Dockerfile        # Backend multi-stage Docker build configuration
 │   ├── tsconfig.json     # Strict TypeScript backend configuration
 │   ├── package.json
 │   └── .env.example      # Backend environment variables template
@@ -99,10 +105,13 @@ Gemini's Free Tier enforces a strict `15 RPM` (Requests Per Minute) quota. To pr
 │   │   ├── App.tsx       # Route definitions & security guards
 │   │   ├── index.css     # Tailwind CSS v4 custom variables & animations
 │   │   └── main.tsx      # DOM Entrypoint
+│   ├── Dockerfile        # Frontend multi-stage Docker + Nginx build configuration
+│   ├── nginx.conf        # Production Nginx server configuration
 │   ├── index.html        # Main HTML layout (SEO optimized)
 │   ├── tsconfig.json     # React TypeScript configuration
 │   ├── vite.config.ts    # Vite bundler configuration
 │   └── package.json
+├── docker-compose.yml    # Root Docker Compose orchestrating MongoDB, Backend, and Frontend
 └── README.md
 ```
 

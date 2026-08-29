@@ -27,6 +27,26 @@ const generateRefreshToken = (sessionId: string): string => {
   return jwt.sign({ sessionId }, secret, { expiresIn: '7d' });
 };
 
+// Helper to construct production-grade Cookie Options (SameSite=none & Secure=true in production for cross-site Vercel <-> Render cookies)
+const getCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  };
+};
+
+const getClearCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+  };
+};
+
 /**
  * Register a new inactive user, generate OTP, and send email.
  */
@@ -197,12 +217,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     await session.save();
 
     // Set refresh token in HttpOnly cookie
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || true, // default to true in testing
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
 
     res.status(200).json({
       success: true,
@@ -240,39 +255,42 @@ export const refresh = async (req: Request, res: Response, next: NextFunction): 
     if (!secret) {
       res.status(500).json({
         success: false,
-        message: 'Internal configuration error (Refresh Secret is missing).',
+        message: 'Internal configuration error (Refresh Token Secret missing).',
       });
       return;
     }
 
-    let decoded: any;
+    let decodedSessionId = '';
     try {
-      decoded = jwt.verify(tokenCookie, secret);
-    } catch (err) {
+      const decoded = jwt.verify(tokenCookie, secret) as { sessionId: string };
+      decodedSessionId = decoded.sessionId;
+    } catch (tokenErr) {
+      res.clearCookie('refreshToken', getClearCookieOptions());
       res.status(401).json({
         success: false,
-        message: 'Unauthorized. Refresh token signature invalid.',
+        message: 'Unauthorized. Refresh token is invalid or expired.',
       });
       return;
     }
 
-    const { sessionId } = decoded;
-    const session = await Session.findById(sessionId);
+    // Verify database session tracking
+    const session = await Session.findById(decodedSessionId);
     if (!session) {
+      res.clearCookie('refreshToken', getClearCookieOptions());
       res.status(401).json({
         success: false,
-        message: 'Unauthorized. Active session not found in database.',
+        message: 'Unauthorized. Active session not found or revoked.',
       });
       return;
     }
 
-    // Verify refresh token hash matching (defends against replay/theft)
+    // Verify refresh token signature hash
     const signature = tokenCookie.split('.')[2];
     const incomingHash = hashSha256(signature);
     if (session.refreshTokenHash !== incomingHash) {
       // Token mismatch could imply compromise. Revoke session to be safe.
       await Session.deleteOne({ _id: session._id });
-      res.clearCookie('refreshToken');
+      res.clearCookie('refreshToken', getClearCookieOptions());
       res.status(401).json({
         success: false,
         message: 'Unauthorized. Session compromised and revoked.',
@@ -300,12 +318,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction): 
     await session.save();
 
     // Set new refresh token cookie
-    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || true,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('refreshToken', newRefreshToken, getCookieOptions());
 
     res.status(200).json({
       success: true,
@@ -334,11 +347,7 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
       }
     }
 
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || true,
-      sameSite: 'strict',
-    });
+    res.clearCookie('refreshToken', getClearCookieOptions());
 
     res.status(200).json({
       success: true,

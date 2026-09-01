@@ -7,8 +7,6 @@ import Footer from '../components/Footer';
 interface LeaderboardEntry {
   _id: string;
   totalScore: number;
-  baseScore: number;
-  speedBonus: number;
   timeTaken: number;
   username: string;
   createdAt: string;

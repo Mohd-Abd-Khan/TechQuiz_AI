@@ -17,16 +17,23 @@ app.set('trust proxy', 1);
 
 // Configure CORS
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-const allowedOrigins = [clientUrl, 'http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = Array.from(
+  new Set([clientUrl, 'http://localhost:5173', 'http://127.0.0.1:5173'])
+);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or Postman)
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      // Allow explicitly listed origins or any Vercel deployment subdomain
+      if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
-        callback(null, true); // Fallback allow for dev/test flexibility
+        callback(new Error(`CORS: Origin "${origin}" is not permitted.`));
       }
     },
     credentials: true,
@@ -34,6 +41,7 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+
 
 // Apply middleware
 app.use(express.json());

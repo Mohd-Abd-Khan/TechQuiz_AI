@@ -11,6 +11,7 @@ import QuizResult from './pages/QuizResult';
 import Profile from './pages/Profile';
 import Leaderboard from './pages/Leaderboard';
 import AdminPanel from './pages/AdminPanel';
+import ResetPassword from './pages/ResetPassword';
 
 /**
  * Route Guard for logged in users (checks user session)
@@ -90,6 +91,7 @@ const App: React.FC = () => {
             }
           />
           <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Dashboard/Gameplay Routes */}
           <Route

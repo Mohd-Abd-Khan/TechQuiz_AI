@@ -37,12 +37,7 @@ export function rotateApiKey(): void {
   console.warn(`[ROTATION] Switched to Gemini API Key Index: ${currentKeyIndex}`);
 }
 
-/**
- * Returns the count of loaded keys.
- */
-export function getLoadedKeysCount(): number {
-  return apiKeys.length;
-}
+
 
 /**
  * A robust helper function to execute a Gemini API call with auto-failover and rotation on 429 errors.

@@ -19,14 +19,14 @@ const CATEGORIES = [
 ];
 
 /**
- * Helper to check if a given date is today (server local time)
+ * Helper to check if a given date is today (UTC — consistent regardless of server timezone)
  */
 const isToday = (date: Date): boolean => {
-  const today = new Date();
+  const now = new Date();
   return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
+    date.getUTCDate() === now.getUTCDate() &&
+    date.getUTCMonth() === now.getUTCMonth() &&
+    date.getUTCFullYear() === now.getUTCFullYear()
   );
 };
 

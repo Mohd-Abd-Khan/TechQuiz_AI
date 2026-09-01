@@ -19,8 +19,7 @@ interface QuestionAudit {
 interface Attempt {
   _id: string;
   quizId: string;
-  score: number; // base score
-  speedBonus: number;
+  score: number;
   timeTaken: number;
   mode: 'solo';
   questionsAttempted: QuestionAudit[];
@@ -41,6 +40,11 @@ interface Quiz {
   title: string;
   category: string;
   difficulty: string;
+}
+
+interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
 }
 
 const QuizResult: React.FC = () => {
@@ -64,7 +68,7 @@ const QuizResult: React.FC = () => {
   // Chatbot states
   const [chatbotOpen, setChatbotOpen] = useState<boolean>(false);
   const [chatMessage, setChatMessage] = useState<string>('');
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState<boolean>(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 

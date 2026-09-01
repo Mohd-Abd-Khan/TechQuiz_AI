@@ -17,7 +17,7 @@ const seedBadges = async () => {
         unlockCondition: 'Complete 1 quiz attempt.',
       },
       {
-        badgeId: 'speed_demon',
+        badgeId: 'perfect_score',
         name: 'Quiz Master',
         description: 'Achieved a 100% perfect score on a quiz attempt.',
         iconCode: 'Zap',

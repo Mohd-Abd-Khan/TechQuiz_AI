@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, UserPlus, Mail, Lock, User, AlertTriangle, CheckCircle, Eye, EyeOff } from 'lucide-react';
@@ -267,6 +267,16 @@ const Auth: React.FC = () => {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                </div>
+
+                {/* Forgot Password Link */}
+                <div className="text-right -mt-2">
+                  <Link
+                    to="/reset-password"
+                    className="text-xs text-purple-400 hover:text-purple-300 font-semibold transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
 
                 <button

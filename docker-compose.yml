@@ -24,10 +24,20 @@ services:
       - "5000:5000"
     environment:
       - PORT=5000
+      - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/techquiz-ai
-      - JWT_SECRET=production_jwt_secret_key_techquiz_2026
-      - REFRESH_TOKEN_SECRET=production_refresh_secret_key_techquiz_2026
-      - CLIENT_URL=http://localhost
+      - JWT_SECRET=${JWT_SECRET}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+      - CLIENT_URL=${CLIENT_URL}
+      - GEMINI_KEY_1=${GEMINI_KEY_1}
+      - GEMINI_KEY_2=${GEMINI_KEY_2}
+      - GEMINI_KEY_3=${GEMINI_KEY_3}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
     depends_on:
       - mongodb
 

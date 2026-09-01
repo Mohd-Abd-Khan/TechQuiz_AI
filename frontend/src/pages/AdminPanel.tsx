@@ -33,6 +33,18 @@ interface Question {
   points: number;
 }
 
+interface ActivityDataPoint {
+  date: string;
+  attempts: number;
+  avgScore: number;
+}
+
+interface CategoryDataPoint {
+  category: string;
+  count: number;
+  avgScore: number;
+}
+
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
   // Lists
@@ -42,8 +54,8 @@ const AdminPanel: React.FC = () => {
 
   // Analytics Stats
   const [summary, setSummary] = useState({ totalUsers: 0, totalQuizzes: 0, totalAttempts: 0, avgScore: 0 });
-  const [lineChartData, setLineChartData] = useState<any[]>([]);
-  const [radarChartData, setRadarChartData] = useState<any[]>([]);
+  const [lineChartData, setLineChartData] = useState<ActivityDataPoint[]>([]);
+  const [radarChartData, setRadarChartData] = useState<CategoryDataPoint[]>([]);
 
   // AI Generator States
   const [aiTopic, setAiTopic] = useState<string>('');

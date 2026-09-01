@@ -331,7 +331,6 @@ export const submitQuizAttempt = async (
       };
     });
 
-    const finalScore = calculatedScore;
 
     // Save Attempt document
     const attempt = new Attempt({
@@ -339,7 +338,6 @@ export const submitQuizAttempt = async (
       quizId: new mongoose.Types.ObjectId(quizId),
       questionsAttempted,
       score: calculatedScore,
-      speedBonus: 0,
       timeTaken: totalTimeTaken,
       mode: 'solo',
     });
@@ -350,14 +348,14 @@ export const submitQuizAttempt = async (
     const user = await User.findById(userId);
     if (user) {
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setUTCHours(0, 0, 0, 0); // UTC midnight — consistent across server timezones
 
       if (user.lastActiveDate) {
         const lastActive = new Date(user.lastActiveDate);
-        lastActive.setHours(0, 0, 0, 0);
+        lastActive.setUTCHours(0, 0, 0, 0);
 
         const diffTime = Math.abs(today.getTime() - lastActive.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 1) {
           // Streak increments on consecutive days
@@ -382,10 +380,10 @@ export const submitQuizAttempt = async (
         unlockedBadgeMsg = 'Achievement Unlocked: First Quiz Attempt!';
       }
 
-      // Rule 2: 'speed_demon' - perfect score on quiz attempt
+      // Rule 2: 'perfect_score' — awarded for achieving 100% on a quiz
       const maxPossibleScore = questionMap.size * 10;
-      if (calculatedScore >= maxPossibleScore && maxPossibleScore > 0 && !currentBadges.has('speed_demon')) {
-        user.badges.push('speed_demon');
+      if (calculatedScore >= maxPossibleScore && maxPossibleScore > 0 && !currentBadges.has('perfect_score')) {
+        user.badges.push('perfect_score');
         unlockedBadgeMsg = 'Achievement Unlocked: Perfect Score Master!';
       }
 
@@ -400,9 +398,7 @@ export const submitQuizAttempt = async (
       res.status(200).json({
         success: true,
         attempt,
-        totalScore: finalScore,
-        baseScore: calculatedScore,
-        speedBonus: 0,
+        totalScore: calculatedScore,
         streak: user.streak,
         badgeUnlocked: unlockedBadgeMsg || null,
       });
@@ -410,9 +406,7 @@ export const submitQuizAttempt = async (
       res.status(200).json({
         success: true,
         attempt,
-        totalScore: finalScore,
-        baseScore: calculatedScore,
-        speedBonus: 0,
+        totalScore: calculatedScore,
       });
     }
   } catch (error) {
@@ -434,8 +428,6 @@ export const getLeaderboard = async (req: Request, res: Response, next: NextFunc
         $project: {
           userId: 1,
           timeTaken: 1,
-          baseScore: '$score',
-          speedBonus: '$speedBonus',
           totalScore: '$score',
           createdAt: 1,
         },
@@ -457,8 +449,6 @@ export const getLeaderboard = async (req: Request, res: Response, next: NextFunc
         $project: {
           _id: 1,
           totalScore: 1,
-          baseScore: 1,
-          speedBonus: 1,
           timeTaken: 1,
           createdAt: 1,
           username: '$user.username',

@@ -20,6 +20,12 @@ interface Quiz {
   timeLimitPerQuestion: number;
 }
 
+interface AnswerPayload {
+  questionId: string;
+  selectedOption: number; // -1 = skipped/timed-out
+  timeTaken: number;      // seconds
+}
+
 const QuizAttempt: React.FC = () => {
   const { id: quizId } = useParams();
   const navigate = useNavigate();
@@ -28,7 +34,10 @@ const QuizAttempt: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIdx, setCurrentIdx] = useState<number>(0);
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<any[]>([]);
+  const [answers, setAnswers] = useState<AnswerPayload[]>([]);
+
+  // Ref ensures handleTimeout always closes over the latest state values
+  const handleTimeoutRef = useRef<() => void>(() => {});
 
   // Timer States
   const [secondsLeft, setSecondsLeft] = useState<number>(30);
@@ -65,11 +74,14 @@ const QuizAttempt: React.FC = () => {
     };
   }, [quizId]);
 
-  // Start question countdown
+    // Keep the ref current on every render so the interval callback uses fresh state
+    handleTimeoutRef.current = handleTimeout;
+  });
+
+  // Start per-question countdown
   useEffect(() => {
     if (questions.length === 0 || !quiz) return;
 
-    // Set start timestamp to measure exact timeTaken in ms
     questionStartTimeRef.current = Date.now();
     setSelectedOpt(null);
     setSecondsLeft(quiz.timeLimitPerQuestion || 30);
@@ -80,7 +92,8 @@ const QuizAttempt: React.FC = () => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          handleTimeout();
+          // Call via ref to always use latest handleTimeout closure
+          handleTimeoutRef.current();
           return 0;
         }
         return prev - 1;
@@ -93,13 +106,12 @@ const QuizAttempt: React.FC = () => {
   }, [currentIdx, questions, quiz]);
 
   const handleTimeout = () => {
-    // Save skipped answer
     const currentQ = questions[currentIdx];
     const timeTaken = quiz?.timeLimitPerQuestion || 30;
 
-    const newAnswer = {
+    const newAnswer: AnswerPayload = {
       questionId: currentQ._id,
-      selectedOption: -1, // skipped
+      selectedOption: -1, // skipped / timed-out
       timeTaken,
     };
 
@@ -125,7 +137,7 @@ const QuizAttempt: React.FC = () => {
     const finalTimeTaken = Math.min(Math.max(timeTakenSec, 1), limit); // clamp
 
     const currentQ = questions[currentIdx];
-    const newAnswer = {
+    const newAnswer: AnswerPayload = {
       questionId: currentQ._id,
       selectedOption: optIdx,
       timeTaken: finalTimeTaken,
@@ -144,7 +156,7 @@ const QuizAttempt: React.FC = () => {
     }, 800);
   };
 
-  const submitQuiz = async (finalAnswers: any[]) => {
+  const submitQuiz = async (finalAnswers: AnswerPayload[]) => {
     setLoading(true);
     try {
       const response = await api.post(`/quizzes/${quizId}/submit`, {

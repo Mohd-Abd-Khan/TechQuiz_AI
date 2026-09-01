@@ -9,6 +9,8 @@ export interface IUser extends Document {
   streak: number;
   lastActiveDate: Date | null;
   badges: string[];
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +55,14 @@ const UserSchema = new Schema<IUser>(
     badges: {
       type: [String],
       default: [],
+    },
+    passwordResetToken: {
+      type: String,
+      default: undefined,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: undefined,
     },
   },
   {

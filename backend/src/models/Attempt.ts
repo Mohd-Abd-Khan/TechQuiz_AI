@@ -12,7 +12,6 @@ export interface IAttempt extends Document {
   quizId: Types.ObjectId;
   questionsAttempted: IAttemptQuestion[];
   score: number;
-  speedBonus: number;
   timeTaken: number; // total time in seconds
   aiFeedback: string;
   mode: 'solo';
@@ -58,10 +57,6 @@ const AttemptSchema = new Schema<IAttempt>(
     score: {
       type: Number,
       required: true,
-    },
-    speedBonus: {
-      type: Number,
-      default: 0,
     },
     timeTaken: {
       type: Number,
